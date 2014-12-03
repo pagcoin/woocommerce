@@ -27,9 +27,9 @@ function woocommerce_pagcoin_init()
 			$this->log = new WC_Logger();
 			
 			$this->id                 = 'pagcoin';
-			$this->icon               = 'https://pagcoin.com/Content/img/PoweredByPagCoin-40h.png';
+			$this->icon               = plugin_dir_url(__FILE__) . 'img/PoweredByPagCoin-40h.png';
 			$this->has_fields         = false;
-			$this->order_button_text    = __('Pagar com PagCoin', 'pagcoin');
+			$this->order_button_text  = __('Pagar com PagCoin', 'pagcoin');
 			$this->method_title       = 'BitCoins - PagCoin';
 			$this->method_description = 'PagCoin permite que você aceite bitcoins e receba em Reais em sua conta bancária.';
 
@@ -40,9 +40,11 @@ function woocommerce_pagcoin_init()
 			$this->description        = $this->get_option('description');
 			$this->debug              = $this->get_option('debug');
 
-			$this->api_key = $this->get_option('api_key');
+			$this->api_key 			  = $this->get_option('api_key');
+			$this->sandbox 			  = $this->get_option('sandbox') == 'yes' ? true : false;
+			$this->iframeWidth		  = $this->get_option('iframeWidth');
 			
-			if (!$this->get_option('sandbox')){
+			if (!$this->sandbox){
 				$this->base_url = 'https://pagcoin.com';
 			} else {
 				$this->base_url = 'https://sandbox.pagcoin.com';
@@ -86,17 +88,19 @@ function woocommerce_pagcoin_init()
 					'description' => __('API Key informada em <a href="https://pagcoin.com/Painel/API">https://pagcoin.com/Painel/API</a>.', 'pagcoin'),
 					'default'     => __('', 'pagcoin'),
 				),
-				/*'iframeWidth' => array(
-					'title'       => __('Largura do iframe', 'pagcoin'),
-					'type'        => 'text',
-					'description' => __('Largura da área onde é mostrada a ordem de pagamento para o usuário', 'pagcoin'),
+				'iframeWidth' => array(
+					'title'       => __('Largura da ordem de pagamento', 'pagcoin'),
+					'type'        => 'number',
+					'description' => __('Largura em pixels da área onde é mostrada a ordem de pagamento para o usuário', 'pagcoin'),
+					'desc_tip'    => __('Recomenda-se não inserir valores menores que 480 ou maiores que 950', 'pagcoin'),
 					'default'     => '480'
-				),*/
+				),
 				'sandbox' => array(
 					'title'       => __('Modo Sandbox', 'pagcoin' ),
 					'type'        => 'checkbox',
 					'label'       => __('Habilitar modo de sandbox', 'pagcoin' ),
 					'default'     => 'no',
+					'desc_tip'    => __('Lembre-se que a API Key usada no modo de sandbox é diferente de sua API Key de produção.', 'pagcoin'),
 					'description' => __('Modo de Sandbox que permite teste de integração. Mais informações em <a href="https://pagcoin.com/Desenvolvedores/Sandbox">https://pagcoin.com/Desenvolvedores/Sandbox.<a>', 'pagcoin')
 				)
 			);
@@ -108,7 +112,15 @@ function woocommerce_pagcoin_init()
 		
 		function receipt_page($order_id)
 		{
-			echo '<iframe src="' . $this->base_url . '/Invoice/' . $_GET['inv'] . '" width="480" height="380"></iframe>';
+			$ratio = 0.71;
+			
+			if ($this->sandbox){
+				$ratio = 0.8;
+			}
+			
+			$height = ceil($this->iframeWidth * $ratio);
+		
+			echo '<iframe src="' . $this->base_url . '/Invoice/' . $_GET['inv'] . '" width="' . $this->iframeWidth . '" height="' . $height . '"></iframe>';
 		}
 
 		public function process_payment($order_id)
@@ -145,10 +157,12 @@ function woocommerce_pagcoin_init()
 			
 			$jsonRequest = json_encode($request);
 			
+			$this->log->add('pagcoin', $pagCoinUrl);
 			$this->log->add('pagcoin', $jsonRequest);
 			
 			$ch = curl_init($pagCoinUrl);
-			$cabundle = dirname(__FILE__).'/ca-bundle.crt';
+			$cabundle = dirname(__FILE__).'/xtra/ca-bundle.crt';
+			$this->log->add('pagcoin', $cabundle);
 			
 			curl_setopt( $ch, CURLOPT_POST, 1);
 			curl_setopt( $ch, CURLOPT_POSTFIELDS, $jsonRequest);
