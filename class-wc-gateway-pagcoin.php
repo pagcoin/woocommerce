@@ -43,6 +43,7 @@ function woocommerce_pagcoin_init()
 			$this->api_key 			  = $this->get_option('api_key');
 			$this->sandbox 			  = $this->get_option('sandbox') == 'yes' ? true : false;
 			$this->iframeWidth		  = $this->get_option('iframeWidth');
+			$this->tema		  		  = $this->get_option('tema');
 			
 			if (!$this->sandbox){
 				$this->base_url = 'https://pagcoin.com';
@@ -80,7 +81,7 @@ function woocommerce_pagcoin_init()
 				'description' => array(
 					'title' => __('Descrição', 'pagcoin'),
 					'type' => 'textarea',
-					'default' => 'Você receberá uma ordem de pagamento, com a quantia em bitcoins e o endereço para onde você deve transferir.'
+					'default' => 'Você receberá uma ordem de pagamento, com a quantia em bitcoins e o endereço para onde você deve transferir o valor.'
 				),
 				'api_key' => array(
 					'title'       => __('API Key', 'pagcoin'),
@@ -94,6 +95,16 @@ function woocommerce_pagcoin_init()
 					'description' => __('Largura em pixels da área onde é mostrada a ordem de pagamento para o usuário', 'pagcoin'),
 					'desc_tip'    => __('Recomenda-se não inserir valores menores que 480 ou maiores que 950', 'pagcoin'),
 					'default'     => '480'
+				),
+				'tema' => array(
+					'title'			=> __('Tema', 'pagcoin'),
+					'type'			=> 'select',
+					'default'		=> 'light',
+					'description'	=> 'Esquema de cores predominante de seu site. Caso seu plano de fundo seja uma cor clara, a ordem será mostrada com o texto em cores escuras. Caso contrário, em cores claras',
+					'options'		=> array(
+											'light' => 'light',
+											'dark' => 'dark'
+										)
 				),
 				'sandbox' => array(
 					'title'       => __('Modo Sandbox', 'pagcoin' ),
@@ -119,8 +130,12 @@ function woocommerce_pagcoin_init()
 			}
 			
 			$height = ceil($this->iframeWidth * $ratio);
-		
+			
+			echo '<div>' . __('Não feche esta janela ou mude de página até que a confirmação da transferência seja mostrada abaixo.', 'pagcoin') . '</div>';
 			echo '<iframe src="' . $this->base_url . '/Invoice/' . $_GET['inv'] . '" width="' . $this->iframeWidth . '" height="' . $height . '"></iframe>';
+			
+			$order = wc_get_order($order_id);
+			$order->update_status('on-hold', 'Aguardando pagamento');
 		}
 
 		public function process_payment($order_id)
@@ -130,7 +145,7 @@ function woocommerce_pagcoin_init()
 			}
 		
 			$order = wc_get_order($order_id);
-
+			
 			$thanks_link = $this->get_return_url($order);
 			
 			$cust_email = $order->billing_email;
@@ -144,7 +159,7 @@ function woocommerce_pagcoin_init()
 			$apiOrderId = $order_id;
 			$storeName = 'Carrinho de compras';
 			
-			$pagCoinUrl = $this->base_url . "/api/1/CriarInvoice/?modo=light";
+			$pagCoinUrl = $this->base_url . "/api/1/CriarInvoice/?modo=" . $this->tema;
 		
 			$request = array(
 				"apiKey" => $apikey, 
