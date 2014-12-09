@@ -267,8 +267,7 @@ function woocommerce_pagcoin_init()
 			
 			if ($fields["statusPagamento"] == 'confirmado') {
 				$order->payment_complete();
-				$order->update_status('completed');
-				$order->add_order_note(__('Ordem de pagamento paga e confirmada.', 'pagcoin'));
+				$order->update_status('processing', __('Ordem de pagamento paga e confirmada.', 'pagcoin'));
 			} else if ($fields["statusPagamento"] == 'timeout') {
 				$order->update_status('cancelled', __('O valor não foi transferido dentro do intervalo de 15 minutos. A ordem de pagamento foi invalidada.', 'pagcoin'));
 			} else if ($fields["statusPagamento"] == 'recusado') {
