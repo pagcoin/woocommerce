@@ -132,7 +132,7 @@ function woocommerce_pagcoin_init()
 			$height = ceil($this->iframeWidth * $ratio);
 			
 			echo '<div>' . __('Não feche esta janela ou mude de página até que a confirmação da transferência seja mostrada abaixo.', 'pagcoin') . '</div>';
-			echo '<iframe src="' . $this->base_url . '/Invoice/' . $_GET['inv'] . '" width="' . $this->iframeWidth . '" height="' . $height . '"></iframe>';
+			echo '<center><iframe src="' . $this->base_url . '/Invoice/' . $_GET['inv'] . '" width="' . $this->iframeWidth . '" height="' . $height . '"></iframe></center>';
 			
 			$order = wc_get_order($order_id);
 			$order->update_status('on-hold', 'Aguardando pagamento');
@@ -157,14 +157,14 @@ function woocommerce_pagcoin_init()
 			$grandTotal = $order->get_total();
 			$apiEmail = $cust_email;
 			$apiOrderId = $order_id;
-			$storeName = 'Carrinho de compras';
+			$storeName = get_bloginfo('name');
 			
 			$pagCoinUrl = $this->base_url . "/api/1/CriarInvoice/?modo=" . $this->tema;
 		
 			$request = array(
 				"apiKey" => $apikey, 
 				"valorEmMoedaOriginal" => (double)$grandTotal, 
-				"nomeProduto" => 'Carrinho de compras - ' . $storeName, 
+				"nomeProduto" => $storeName . ' - Pedido: ' . $order_id, 
 				"idInterna" => $apiOrderId, 
 				"email" => $apiEmail, 
 				"redirectURL" => ''
