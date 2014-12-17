@@ -144,7 +144,7 @@ function woocommerce_pagcoin_init()
 			}
 			
 			echo '<div>' . __('Não feche esta janela ou mude de página até que a confirmação da transferência seja mostrada abaixo.', 'pagcoin') . '</div>';
-			echo '<iframe id="pagCoinInvoiceIFrame" src="' . $this->base_url . '/Invoice/' . $_GET['inv'] . '" width="' . $width . '" height="' . $height . '"></iframe>';
+			echo '<center><iframe id="pagCoinInvoiceIFrame" src="' . $this->base_url . '/Invoice/' . $_GET['inv'] . '" width="' . $width . '" height="' . $height . '"></iframe></center>';
 			
 			$order = wc_get_order($order_id);
 			$order->update_status('on-hold', 'Aguardando pagamento');
@@ -169,14 +169,14 @@ function woocommerce_pagcoin_init()
 			$grandTotal = $order->get_total();
 			$apiEmail = $cust_email;
 			$apiOrderId = $order_id;
-			$storeName = 'Carrinho de compras';
+			$storeName = get_bloginfo('name');
 			
 			$pagCoinUrl = $this->base_url . "/api/1/CriarInvoice/?modo=" . $this->tema;
 		
 			$request = array(
 				"apiKey" => $apikey, 
 				"valorEmMoedaOriginal" => (double)$grandTotal, 
-				"nomeProduto" => 'Carrinho de compras - ' . $storeName, 
+				"nomeProduto" => $storeName . ' - Pedido: ' . $order_id, 
 				"idInterna" => $apiOrderId, 
 				"email" => $apiEmail, 
 				"redirectURL" => ''
@@ -279,8 +279,7 @@ function woocommerce_pagcoin_init()
 			
 			if ($fields["statusPagamento"] == 'confirmado') {
 				$order->payment_complete();
-				$order->update_status('completed');
-				$order->add_order_note(__('Ordem de pagamento paga e confirmada.', 'pagcoin'));
+				$order->update_status('processing', __('Ordem de pagamento paga e confirmada.', 'pagcoin'));
 			} else if ($fields["statusPagamento"] == 'timeout') {
 				$order->update_status('cancelled', __('O valor não foi transferido dentro do intervalo de 15 minutos. A ordem de pagamento foi invalidada.', 'pagcoin'));
 			} else if ($fields["statusPagamento"] == 'recusado') {
