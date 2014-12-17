@@ -43,6 +43,7 @@ function woocommerce_pagcoin_init()
 			$this->api_key 			  = $this->get_option('api_key');
 			$this->sandbox 			  = $this->get_option('sandbox') == 'yes' ? true : false;
 			$this->iframeWidth		  = $this->get_option('iframeWidth');
+			$this->fullWidth		  = $this->get_option('fullWidth') == 'yes' ? true : false;
 			$this->tema		  		  = $this->get_option('tema');
 			
 			if (!$this->sandbox){
@@ -89,10 +90,16 @@ function woocommerce_pagcoin_init()
 					'description' => __('API Key informada em <a href="https://pagcoin.com/Painel/API">https://pagcoin.com/Painel/API</a>.', 'pagcoin'),
 					'default'     => __('', 'pagcoin'),
 				),
+				'fullWidth' => array(
+					'title'   => __('Ocupar 100% de largura', 'pagcoin'),
+					'type'    => 'checkbox',
+					'label'   => __('Largura da ordem de pagamento atribuída para para 100%. Valor de "Largura da ordem de pagamento" será desconsiderado. Recomendado para layouts responsivos.', 'pagcoin'),
+					'default' => 'yes'
+				),
 				'iframeWidth' => array(
 					'title'       => __('Largura da ordem de pagamento', 'pagcoin'),
 					'type'        => 'number',
-					'description' => __('Largura em pixels da área onde é mostrada a ordem de pagamento para o usuário', 'pagcoin'),
+					'description' => __('Se "Ocupar 100% de Largura" está desabilitado, esta será a largura em pixels da área onde é mostrada a ordem de pagamento para o usuário', 'pagcoin'),
 					'desc_tip'    => __('Recomenda-se não inserir valores menores que 480 ou maiores que 950', 'pagcoin'),
 					'default'     => '480'
 				),
@@ -103,8 +110,7 @@ function woocommerce_pagcoin_init()
 					'description'	=> 'Esquema de cores predominante de seu site. Caso seu plano de fundo seja uma cor clara, a ordem será mostrada com o texto em cores escuras. Caso contrário, em cores claras',
 					'options'		=> array(
 											'light' => 'light',
-											'dark' => 'dark'
-										)
+											'dark' => 'dark')
 				),
 				'sandbox' => array(
 					'title'       => __('Modo Sandbox', 'pagcoin' ),
@@ -123,16 +129,22 @@ function woocommerce_pagcoin_init()
 		
 		function receipt_page($order_id)
 		{
-			$ratio = 0.71;
+			$ratio = 0.72;
 			
 			if ($this->sandbox){
-				$ratio = 0.8;
+				$ratio = 0.84;
 			}
 			
+			$width = $this->iframeWidth;
 			$height = ceil($this->iframeWidth * $ratio);
 			
+			if($this->fullWidth){
+				$width = '100%';
+				echo '<script src="' . plugin_dir_url(__FILE__) . 'js/adap.js' . '"></script>';
+			}
+			
 			echo '<div>' . __('Não feche esta janela ou mude de página até que a confirmação da transferência seja mostrada abaixo.', 'pagcoin') . '</div>';
-			echo '<iframe src="' . $this->base_url . '/Invoice/' . $_GET['inv'] . '" width="' . $this->iframeWidth . '" height="' . $height . '"></iframe>';
+			echo '<iframe id="pagCoinInvoiceIFrame" src="' . $this->base_url . '/Invoice/' . $_GET['inv'] . '" width="' . $width . '" height="' . $height . '"></iframe>';
 			
 			$order = wc_get_order($order_id);
 			$order->update_status('on-hold', 'Aguardando pagamento');
